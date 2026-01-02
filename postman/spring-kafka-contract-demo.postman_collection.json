@@ -1,53 +1,126 @@
 {
   "info": {
-    "name": "Spring Kafka Contract – Schema Registry Demo",
+    "name": "Spring Kafka Contract – Full Demo (Schema + Produce + Consume)",
     "_postman_id": "e2f1a7d4-8c34-4c0b-b2a0-9c9cbe6f9e00",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "End-to-end demo for Kafka Schema Contracts with Spring Boot, Schema Registry, Producer and Consumer."
   },
   "variable": [
     {
       "key": "schemaRegistryUrl",
       "value": "http://localhost:8081"
+    },
+    {
+      "key": "appUrl",
+      "value": "http://localhost:8080"
     }
   ],
   "item": [
+
     {
-      "name": "Get Subjects",
-      "request": {
-        "method": "GET",
-        "url": "{{schemaRegistryUrl}}/subjects"
-      }
-    },
-    {
-      "name": "Get Global Compatibility",
-      "request": {
-        "method": "GET",
-        "url": "{{schemaRegistryUrl}}/config"
-      }
-    },
-    {
-      "name": "Set Global Compatibility (BACKWARD)",
-      "request": {
-        "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{schemaRegistryUrl}}/config",
-        "body": {
-          "mode": "raw",
-          "raw": "{ \"compatibility\": \"BACKWARD\" }"
+      "name": "Schema Registry",
+      "item": [
+
+        {
+          "name": "Get Subjects",
+          "request": {
+            "method": "GET",
+            "url": "{{schemaRegistryUrl}}/subjects"
+          }
+        },
+
+        {
+          "name": "Get Global Compatibility",
+          "request": {
+            "method": "GET",
+            "url": "{{schemaRegistryUrl}}/config"
+          }
+        },
+
+        {
+          "name": "Set Global Compatibility (BACKWARD)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{schemaRegistryUrl}}/config",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"compatibility\": \"BACKWARD\" }"
+            }
+          }
+        },
+
+        {
+          "name": "Set Subject Compatibility (order-events-value)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{schemaRegistryUrl}}/config/order-events-value",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"compatibility\": \"BACKWARD\" }"
+            }
+          }
         }
-      }
+
+      ]
     },
+
     {
-      "name": "Set Subject Compatibility",
-      "request": {
-        "method": "PUT",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{schemaRegistryUrl}}/config/order-events-value",
-        "body": {
-          "mode": "raw",
-          "raw": "{ \"compatibility\": \"BACKWARD\" }"
+      "name": "Kafka Producer (Spring Boot)",
+      "item": [
+
+        {
+          "name": "Produce Order Event (v1 – valid)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{appUrl}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-123\",\n  \"amount\": 99.90,\n  \"createdAt\": \"2026-01-02T21:30:00Z\"\n}"
+            }
+          }
+        },
+
+        {
+          "name": "Produce Order Event (breaking – demo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{appUrl}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORD-999\",\n  \"createdAt\": \"2026-01-02T21:30:00Z\"\n}"
+            }
+          }
         }
-      }
+
+      ]
+    },
+
+    {
+      "name": "Kafka Consumer (Spring Boot)",
+      "item": [
+
+        {
+          "name": "Consume Order Events",
+          "request": {
+            "method": "GET",
+            "url": "{{appUrl}}/api/orders/events"
+          }
+        }
+
+      ]
     }
+
   ]
 }

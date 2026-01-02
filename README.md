@@ -214,6 +214,18 @@ mvn spring-boot:run
 
 IncompatibleSchemaException: Schema is NOT compatible
 
+## 🧪 Postman Demo
+
+This repository includes a Postman collection demonstrating:
+
+- Schema Registry management
+- Kafka producer calls via REST
+- Kafka consumer visualization
+
+Import:
+spring-kafka-contract-demo.postman_collection.json
+
+
 ℹ️ Note on Schema Registry Compatibility
 
 If a subject does not define its own compatibility level, the Schema Registry

@@ -1,12 +1,27 @@
+version: '@project.version@'
+
+server:
+  port: 8080
+  error:
+    include-message: always
 spring:
+  application:
+    name: spring-kafka-contract-demo
+
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
       group-id: demo-consumer
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: io.github.mathias82.demo.model
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    listener:
+      missing-topics-fatal: false
 
 kafka:
   contract:
