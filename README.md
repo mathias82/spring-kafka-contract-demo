@@ -116,12 +116,6 @@ Observe how the application fails before producing or consuming any data.
 This repository contains a **live demo** explaining how Kafka schema contracts
 should be enforced **before producing data**.
 
-### Run locally
-```bash
-docker compose up -d
-
-Schema Registry: http://localhost:8081
-
 Demo flow
 
 1. Register initial schema (v1)
@@ -138,3 +132,93 @@ Without contract enforcement:
 With this starter:
 - Incompatible schemas fail at application startup
 - Kafka stays safe
+
+What this demo proves
+
+✅ Application fails fast if:
+
+a required schema subject is missing
+
+schema compatibility is violated
+
+registry configuration is incorrect
+
+✅ No runtime surprises
+✅ No broken consumers in production
+
+Spring Boot App
+   |
+   |-- StartupSchemaValidator
+   |-- SchemaRegistryClient
+   |
+Kafka Broker  <--->  Schema Registry
+
+🧪 Demo Prerequisites
+
+- Docker + Docker Compose
+- Java 21
+- Maven 3.9+
+- (Optional) Postman
+
+
+▶️ Run the Demo
+1️⃣ Start Kafka & Schema Registry
+docker-compose up -d
+
+
+Verify:
+
+Kafka → localhost:9092
+
+Schema Registry → http://localhost:8081
+
+2️⃣ Register Schema & Compatibility
+
+Either:
+
+Option A – automatic (recommended)
+
+Schema is registered via schema-init container.
+
+Option B – Postman / curl
+
+curl -X PUT http://localhost:8081/config/order-events-value \
+  -H "Content-Type: application/json" \
+  -d '{ "compatibility": "BACKWARD" }'
+
+curl -X POST http://localhost:8081/subjects/order-events-value/versions \
+  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+  -d @schemas/order-event-v1.json
+
+3️⃣ Start the Spring Boot app
+
+mvn spring-boot:run
+
+✔️ App starts successfully
+✔️ Schema validated
+✔️ Compatibility enforced
+
+💥 Breaking the Contract (Demo Moment)
+
+Register an incompatible schema:
+
+curl -X POST http://localhost:8081/subjects/order-events-value/versions \
+  -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+  -d @schemas/order-event-breaking.json
+
+Restart the app:
+
+mvn spring-boot:run
+
+❌ Application fails immediately with:
+
+IncompatibleSchemaException: Schema is NOT compatible
+
+ℹ️ Note on Schema Registry Compatibility
+
+If a subject does not define its own compatibility level, the Schema Registry
+returns 404 (error_code 40408). In that case, the global compatibility
+setting applies.
+
+spring-kafka-contract-starter automatically falls back to the global
+compatibility configuration to ensure safe startup validation.

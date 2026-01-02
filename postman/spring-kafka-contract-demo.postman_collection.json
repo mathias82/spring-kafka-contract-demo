@@ -1,0 +1,53 @@
+{
+  "info": {
+    "name": "Spring Kafka Contract – Schema Registry Demo",
+    "_postman_id": "e2f1a7d4-8c34-4c0b-b2a0-9c9cbe6f9e00",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "schemaRegistryUrl",
+      "value": "http://localhost:8081"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get Subjects",
+      "request": {
+        "method": "GET",
+        "url": "{{schemaRegistryUrl}}/subjects"
+      }
+    },
+    {
+      "name": "Get Global Compatibility",
+      "request": {
+        "method": "GET",
+        "url": "{{schemaRegistryUrl}}/config"
+      }
+    },
+    {
+      "name": "Set Global Compatibility (BACKWARD)",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{schemaRegistryUrl}}/config",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"compatibility\": \"BACKWARD\" }"
+        }
+      }
+    },
+    {
+      "name": "Set Subject Compatibility",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{schemaRegistryUrl}}/config/order-events-value",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"compatibility\": \"BACKWARD\" }"
+        }
+      }
+    }
+  ]
+}

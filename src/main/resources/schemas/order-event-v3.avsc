@@ -1,0 +1,8 @@
+{
+  "type": "record",
+  "name": "OrderEvent",
+  "namespace": "io.github.mathias82.demo.model",
+  "fields": [
+    { "name": "orderId", "type": "string" }
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "schema": "{ \"type\":\"record\",\"name\":\"OrderEvent\",\"fields\":[ {\"name\":\"orderId\",\"type\":\"string\"},{\"name\":\"amount\",\"type\":\"double\"} ] }"
+}

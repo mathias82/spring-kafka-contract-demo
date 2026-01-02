@@ -17,4 +17,4 @@ kafka:
       url: http://localhost:8081
     subjects:
       - name: order-events-value
-        schema-file: classpath:schemas/order-event.avsc
+        schema-file: classpath:schemas/order-event-v1.avsc
