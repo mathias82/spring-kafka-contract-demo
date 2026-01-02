@@ -3,6 +3,7 @@ package io.github.mathias82.demo.controller;
 import io.github.mathias82.demo.consumer.OrderConsumer;
 import io.github.mathias82.demo.model.OrderEvent;
 import io.github.mathias82.demo.producer.OrderProducer;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,7 @@ public class OrderController {
      * Produce VALID event (v1 compatible)
      */
     @PostMapping
-    public ResponseEntity<String> createOrder(@RequestBody OrderEvent request) {
+    public ResponseEntity<String> createOrder(@Valid @RequestBody OrderEvent request) {
 
         OrderEvent event = new OrderEvent(
                 request.orderId(),
