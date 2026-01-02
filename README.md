@@ -1,3 +1,7 @@
+This repository is part of the **Kafka Contract Enforcement** initiative:
+- 🔧 Starter: https://github.com/mathias82/spring-kafka-contract-starter
+- 🌐 Live Demo: https://mathias82.github.io/spring-kafka-contract-demo/
+
 # Spring Kafka Contract Demo
 
 This project demonstrates how to enforce **Kafka data contracts** at application startup
