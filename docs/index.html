@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Kafka Schema Evolution Demo | Spring Kafka Contract Starter</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Interactive demo explaining Apache Kafka Schema Evolution with Avro. Learn backward compatibility, breaking changes and contract enforcement using Spring Kafka Contract Starter." />
+    <meta name="keywords" content="Kafka, Schema Registry, Avro, Schema Evolution, Spring Kafka, Contract Testing, Event Streaming" />
+    <meta name="author" content="Dimitris Kontokostas" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Kafka Schema Evolution Demo" />
+    <meta property="og:description" content="Visual demo of Avro schema evolution (v1 / v2 / v3) with compatibility rules and runtime enforcement." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://github.com/mathias82/spring-kafka-contract-starter" />
+
+    <style>
+        body {
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif;
+          margin: 0;
+          padding: 32px;
+          background: #fafafa;
+          color: #222;
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: auto;
+        }
+
+        h1 {
+          margin-bottom: 4px;
+        }
+
+        .subtitle {
+          color: #555;
+          margin-bottom: 24px;
+        }
+
+        .toolbar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+
+        select, button {
+          padding: 10px 14px;
+          font-size: 14px;
+          border-radius: 8px;
+          border: 1px solid #ccc;
+          background: white;
+        }
+
+        button {
+          cursor: pointer;
+          font-weight: 600;
+        }
+
+        button:hover {
+          background: #f0f0f0;
+        }
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 16px;
+        }
+
+        .card {
+          background: white;
+          border-radius: 12px;
+          border: 1px solid #ddd;
+          padding: 16px;
+        }
+
+        .card h2 {
+          margin-top: 0;
+          font-size: 18px;
+        }
+
+        pre {
+          background: #f5f5f5;
+          border-radius: 8px;
+          padding: 12px;
+          font-size: 12px;
+          overflow-x: auto;
+        }
+
+        .badge {
+          display: inline-block;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .ok { background: #e6f7ec; color: #1e7f45; }
+        .warn { background: #fff4e5; color: #a15c00; }
+        .bad { background: #ffe8e8; color: #a10000; }
+
+        .result {
+          margin-top: 24px;
+          padding: 16px;
+          border-radius: 12px;
+          border: 1px solid #ccc;
+          background: white;
+        }
+
+        .footer {
+          margin-top: 32px;
+          font-size: 14px;
+          color: #555;
+        }
+
+        .footer a {
+          color: #0066cc;
+          text-decoration: none;
+          font-weight: 600;
+        }
+
+        .footer a:hover {
+          text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Kafka Schema Evolution Demo (Avro)</h1>
+    <p class="subtitle">
+        Visual explanation of <b>schema evolution</b>, <b>compatibility rules</b> and
+        <b>contract enforcement</b> using Spring Kafka.
+    </p>
+
+    <div class="toolbar">
+        <label>
+            Compatibility mode:
+            <select id="mode">
+                <option>BACKWARD</option>
+                <option>FORWARD</option>
+                <option>FULL</option>
+            </select>
+        </label>
+
+        <label>
+            Existing schema:
+            <select id="current">
+                <option value="v1">v1</option>
+                <option value="v2">v2</option>
+            </select>
+        </label>
+
+        <label>
+            New schema:
+            <select id="next">
+                <option value="v2">v2</option>
+                <option value="v3">v3</option>
+            </select>
+        </label>
+
+        <button onclick="runCheck()">Run compatibility check</button>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h2>Schema v1 <span class="badge ok">Baseline</span></h2>
+            <pre>{
+  "type": "record",
+  "name": "OrderEvent",
+  "fields": [
+    { "name": "orderId", "type": "string" },
+    { "name": "amount", "type": "double" }
+  ]
+}</pre>
+            <p>Initial contract used by all consumers.</p>
+        </div>
+
+        <div class="card">
+            <h2>Schema v2 <span class="badge warn">Compatible</span></h2>
+            <pre>{
+  "type": "record",
+  "name": "OrderEvent",
+  "fields": [
+    { "name": "orderId", "type": "string" },
+    { "name": "amount", "type": "double" },
+    { "name": "currency", "type": ["null","string"], "default": null }
+  ]
+}</pre>
+            <p>Adds optional field → safe evolution.</p>
+        </div>
+
+        <div class="card">
+            <h2>Schema v3 <span class="badge bad">Breaking</span></h2>
+            <pre>{
+  "type": "record",
+  "name": "OrderEvent",
+  "fields": [
+    { "name": "orderId", "type": "string" }
+  ]
+}</pre>
+            <p>Removes required field → breaking change.</p>
+        </div>
+    </div>
+
+    <div class="result" id="result">
+        <b>Result:</b>
+        <p>Select schemas and run the check.</p>
+    </div>
+
+    <div class="footer">
+        <p>
+            🔗 GitHub:
+            <a href="https://github.com/mathias82/spring-kafka-contract-starter" target="_blank">
+                spring-kafka-contract-starter
+            </a>
+        </p>
+        <p>
+            This demo illustrates how <b>schema contracts</b> should be enforced
+            <b>before producing data</b> to Kafka.
+        </p>
+    </div>
+
+</div>
+
+<script>
+    function runCheck() {
+      const current = document.getElementById("current").value;
+      const next = document.getElementById("next").value;
+      const mode = document.getElementById("mode").value;
+      const result = document.getElementById("result");
+
+      if (current === "v1" && next === "v2") {
+        result.innerHTML =
+          "<b>Result: ✅ COMPATIBLE</b><p>Optional field added with default. Safe for " + mode + " mode.</p>";
+      } else {
+        result.innerHTML =
+          "<b>Result: ❌ INCOMPATIBLE</b><p>Required field removed. Application startup should fail.</p>";
+      }
+    }
+</script>
+
+</body>
+</html>
