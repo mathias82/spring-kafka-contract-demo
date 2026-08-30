@@ -28,7 +28,6 @@ kafka:
     enabled: true
     compatibility: BACKWARD
     registry:
-      type: confluent
       url: http://localhost:8081
       connect-timeout-ms: 2000
       read-timeout-ms: 5000
