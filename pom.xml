@@ -91,6 +91,9 @@
                         <goals><goal>schema</goal></goals>
                         <configuration>
                             <sourceDirectory>${project.basedir}/src/main/resources/schemas</sourceDirectory>
+                            <includes>
+                                <include>order-event-v1.avsc</include>
+                            </includes>
                             <outputDirectory>${project.build.directory}/generated-sources/avro</outputDirectory>
                             <stringType>String</stringType>
                             <createSetters>true</createSetters>
