@@ -19,8 +19,8 @@ jobs:
           java-version: 21
           cache: maven
 
-      - name: Verify released starter 0.2.1 resolves
-        run: mvn -B -U dependency:get -Dartifact=io.github.mathias82.spring.kafka:spring-kafka-contract-starter:0.2.1
+      - name: Verify released starter 0.2.2 resolves
+        run: mvn -B -U dependency:get -Dartifact=io.github.mathias82.spring.kafka:spring-kafka-contract-starter:0.2.2
 
       - name: Start Kafka and Schema Registry
         run: docker compose up -d
