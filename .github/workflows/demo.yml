@@ -24,12 +24,23 @@ jobs:
         run: |
           set -euo pipefail
           STARTER_REPO="https://github.com/mathias82/spring-kafka-contract-starter.git"
-          if git ls-remote --exit-code --heads "$STARTER_REPO" feat/0.2.0-release-readiness >/dev/null 2>&1; then
-            STARTER_REF="feat/0.2.0-release-readiness"
-          else
-            STARTER_REF="main"
+          REQUIRED_VERSION="0.2.0"
+
+          git clone --depth 1 --branch main "$STARTER_REPO" .starter-under-test
+          main_version="$(mvn -q -f .starter-under-test/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)"
+
+          if [ "$main_version" != "$REQUIRED_VERSION" ]; then
+            echo "starter main is $main_version; using release-readiness branch for $REQUIRED_VERSION"
+            git -C .starter-under-test fetch --depth 1 origin feat/0.2.0-release-readiness
+            git -C .starter-under-test checkout FETCH_HEAD
           fi
-          git clone --depth 1 --branch "$STARTER_REF" "$STARTER_REPO" .starter-under-test
+
+          resolved_version="$(mvn -q -f .starter-under-test/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)"
+          if [ "$resolved_version" != "$REQUIRED_VERSION" ]; then
+            echo "Expected starter $REQUIRED_VERSION but resolved $resolved_version"
+            exit 1
+          fi
+
           mvn -B -f .starter-under-test/pom.xml clean install -DskipTests
 
       - name: Start Kafka and Schema Registry
