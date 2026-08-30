@@ -25,7 +25,7 @@ start_app() {
   APP_PORT="$port"
 
   mvn -B spring-boot:run \
-    -Dspring-boot.run.arguments="--server.port=${port} --kafka.contract.subjects[0].schema-file=classpath:schemas/${schema_file}" \
+    -Dspring-boot.run.arguments="--server.port=${port} --kafka.contract.subjects[0].name=order-events-value --kafka.contract.subjects[0].schema-file=classpath:schemas/${schema_file} --kafka.contract.subjects[0].schema-type=AVRO" \
     >"$log_file" 2>&1 &
   APP_PID=$!
 }
