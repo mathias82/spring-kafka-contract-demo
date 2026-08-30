@@ -4,6 +4,7 @@ server:
   port: 8080
   error:
     include-message: always
+
 spring:
   application:
     name: spring-kafka-contract-demo
@@ -29,6 +30,9 @@ kafka:
     registry:
       type: confluent
       url: http://localhost:8081
+      connect-timeout-ms: 2000
+      read-timeout-ms: 5000
     subjects:
       - name: order-events-value
         schema-file: classpath:schemas/order-event-v1.avsc
+        schema-type: AVRO

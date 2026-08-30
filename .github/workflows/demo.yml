@@ -1,0 +1,81 @@
+name: Demo Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Start Kafka and Schema Registry
+        run: docker compose up -d
+
+      - name: Wait for schema initialization
+        shell: bash
+        run: |
+          set -euo pipefail
+          container_id="$(docker compose ps -q schema-init)"
+          for attempt in {1..60}; do
+            status="$(docker inspect -f '{{.State.Status}}' "$container_id")"
+            if [ "$status" = "exited" ]; then
+              exit_code="$(docker inspect -f '{{.State.ExitCode}}' "$container_id")"
+              if [ "$exit_code" = "0" ]; then
+                exit 0
+              fi
+              docker compose logs schema-init
+              exit "$exit_code"
+            fi
+            sleep 2
+          done
+          echo "schema-init did not complete in time"
+          docker compose logs
+          exit 1
+
+      - name: Build demo
+        run: mvn -B clean package
+
+      - name: Verify application startup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn -B spring-boot:run > app.log 2>&1 &
+          app_pid=$!
+          trap 'kill "$app_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..60}; do
+            if curl --fail --silent http://localhost:8080/api/orders/events >/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$app_pid" 2>/dev/null; then
+              echo "Application exited before becoming ready"
+              cat app.log
+              exit 1
+            fi
+            sleep 2
+          done
+
+          echo "Application did not become ready"
+          cat app.log
+          exit 1
+
+      - name: Print logs on failure
+        if: failure()
+        run: |
+          cat app.log 2>/dev/null || true
+          docker compose logs || true
+
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose down -v
