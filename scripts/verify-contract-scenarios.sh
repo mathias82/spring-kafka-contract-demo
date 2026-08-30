@@ -2,6 +2,7 @@
 set -euo pipefail
 
 APP_PID=""
+APP_PORT=""
 
 cleanup_app() {
   if [ -n "${APP_PID}" ] && kill -0 "${APP_PID}" 2>/dev/null; then
@@ -9,6 +10,7 @@ cleanup_app() {
     wait "${APP_PID}" 2>/dev/null || true
   fi
   APP_PID=""
+  APP_PORT=""
 }
 
 trap cleanup_app EXIT
@@ -16,21 +18,24 @@ trap cleanup_app EXIT
 start_app() {
   local schema_file="$1"
   local log_file="$2"
+  local port="$3"
 
   cleanup_app
   rm -f "$log_file"
+  APP_PORT="$port"
 
   mvn -B spring-boot:run \
-    -Dspring-boot.run.arguments="--kafka.contract.subjects[0].schema-file=classpath:schemas/${schema_file}" \
+    -Dspring-boot.run.arguments="--server.port=${port} --kafka.contract.subjects[0].schema-file=classpath:schemas/${schema_file}" \
     >"$log_file" 2>&1 &
   APP_PID=$!
 }
 
 wait_for_ready() {
   local log_file="$1"
+  local url="http://localhost:${APP_PORT}/api/orders/events"
 
   for attempt in {1..60}; do
-    if curl --fail --silent http://localhost:8080/api/orders/events >/dev/null; then
+    if curl --fail --silent "$url" >/dev/null; then
       return 0
     fi
 
@@ -49,17 +54,17 @@ wait_for_ready() {
 }
 
 echo "=== Scenario 1: baseline v1 starts and completes Kafka round trip ==="
-start_app "order-event-v1.avsc" "scenario-v1.log"
+start_app "order-event-v1.avsc" "scenario-v1.log" 18081
 wait_for_ready "scenario-v1.log"
 
 order_id="scenario-$(date +%s)-$RANDOM"
 curl --fail --silent \
   -H 'Content-Type: application/json' \
   -d "{\"orderId\":\"$order_id\",\"amount\":42.50,\"createdAt\":\"2026-08-30T00:00:00Z\"}" \
-  http://localhost:8080/api/orders >/dev/null
+  "http://localhost:${APP_PORT}/api/orders" >/dev/null
 
 for attempt in {1..60}; do
-  events="$(curl --fail --silent http://localhost:8080/api/orders/events)"
+  events="$(curl --fail --silent "http://localhost:${APP_PORT}/api/orders/events")"
   if printf '%s' "$events" | grep -Fq "$order_id"; then
     echo "PASS: v1 round trip observed for $order_id"
     break
@@ -81,24 +86,22 @@ for attempt in {1..60}; do
 done
 
 cleanup_app
-sleep 2
 
 echo "=== Scenario 2: backward-compatible v2 is accepted at startup ==="
-start_app "order-event-v2.avsc" "scenario-v2.log"
+start_app "order-event-v2.avsc" "scenario-v2.log" 18082
 wait_for_ready "scenario-v2.log"
 echo "PASS: v2 compatible evolution accepted"
 cleanup_app
-sleep 2
 
 echo "=== Scenario 3: breaking v3 is rejected at startup ==="
-start_app "order-event-v3.avsc" "scenario-v3.log"
+start_app "order-event-v3.avsc" "scenario-v3.log" 18083
 
 for attempt in {1..45}; do
   if ! kill -0 "$APP_PID" 2>/dev/null; then
     wait "$APP_PID" 2>/dev/null || true
     APP_PID=""
 
-    if grep -Eq "Schema is NOT compatible|IncompatibleSchemaException|not compatible" scenario-v3.log; then
+    if grep -Eqi "Schema is NOT compatible|IncompatibleSchemaException|not compatible|compatibility.*false" scenario-v3.log; then
       echo "PASS: v3 breaking evolution rejected"
       exit 0
     fi
@@ -108,7 +111,7 @@ for attempt in {1..45}; do
     exit 1
   fi
 
-  if curl --fail --silent http://localhost:8080/api/orders/events >/dev/null; then
+  if curl --fail --silent "http://localhost:${APP_PORT}/api/orders/events" >/dev/null; then
     echo "Breaking v3 schema unexpectedly allowed the application to start"
     cat scenario-v3.log
     exit 1
