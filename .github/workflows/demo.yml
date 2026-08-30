@@ -19,29 +19,8 @@ jobs:
           java-version: 21
           cache: maven
 
-      - name: Install starter under test
-        shell: bash
-        run: |
-          set -euo pipefail
-          STARTER_REPO="https://github.com/mathias82/spring-kafka-contract-starter.git"
-          REQUIRED_VERSION="0.2.0"
-
-          git clone --depth 1 --branch main "$STARTER_REPO" .starter-under-test
-          main_version="$(mvn -q -f .starter-under-test/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)"
-
-          if [ "$main_version" != "$REQUIRED_VERSION" ]; then
-            echo "starter main is $main_version; using release-readiness branch for $REQUIRED_VERSION"
-            git -C .starter-under-test fetch --depth 1 origin feat/0.2.0-release-readiness
-            git -C .starter-under-test checkout FETCH_HEAD
-          fi
-
-          resolved_version="$(mvn -q -f .starter-under-test/pom.xml help:evaluate -Dexpression=project.version -DforceStdout)"
-          if [ "$resolved_version" != "$REQUIRED_VERSION" ]; then
-            echo "Expected starter $REQUIRED_VERSION but resolved $resolved_version"
-            exit 1
-          fi
-
-          mvn -B -f .starter-under-test/pom.xml clean install -DskipTests
+      - name: Verify released starter 0.2.1 resolves
+        run: mvn -B -U dependency:get -Dartifact=io.github.mathias82.spring.kafka:spring-kafka-contract-starter:0.2.1
 
       - name: Start Kafka and Schema Registry
         run: docker compose up -d
@@ -70,59 +49,18 @@ jobs:
       - name: Build demo
         run: mvn -B clean package
 
-      - name: Verify producer to Kafka to consumer flow
-        shell: bash
-        run: |
-          set -euo pipefail
-          mvn -B spring-boot:run > app.log 2>&1 &
-          app_pid=$!
-          trap 'kill "$app_pid" 2>/dev/null || true' EXIT
-
-          for attempt in {1..60}; do
-            if curl --fail --silent http://localhost:8080/api/orders/events >/dev/null; then
-              break
-            fi
-            if ! kill -0 "$app_pid" 2>/dev/null; then
-              echo "Application exited before becoming ready"
-              cat app.log
-              exit 1
-            fi
-            if [ "$attempt" = "60" ]; then
-              echo "Application did not become ready"
-              cat app.log
-              exit 1
-            fi
-            sleep 2
-          done
-
-          order_id="ci-$(date +%s)"
-          curl --fail --silent \
-            -H 'Content-Type: application/json' \
-            -d "{\"orderId\":\"$order_id\",\"amount\":42.50,\"createdAt\":\"2026-08-30T00:00:00Z\"}" \
-            http://localhost:8080/api/orders >/dev/null
-
-          for attempt in {1..60}; do
-            events="$(curl --fail --silent http://localhost:8080/api/orders/events)"
-            if printf '%s' "$events" | grep -Fq "$order_id"; then
-              echo "Verified Kafka round-trip for $order_id"
-              exit 0
-            fi
-            if ! kill -0 "$app_pid" 2>/dev/null; then
-              echo "Application exited before event was consumed"
-              cat app.log
-              exit 1
-            fi
-            sleep 2
-          done
-
-          echo "Produced order was not observed by the consumer"
-          cat app.log
-          exit 1
+      - name: Verify contract scenarios and Kafka round trip
+        run: bash scripts/verify-contract-scenarios.sh
 
       - name: Print logs on failure
         if: failure()
         run: |
-          cat app.log 2>/dev/null || true
+          for log in scenario-v1.log scenario-v2.log scenario-v3.log; do
+            if [ -f "$log" ]; then
+              echo "===== $log ====="
+              cat "$log"
+            fi
+          done
           docker compose logs || true
 
       - name: Stop infrastructure
