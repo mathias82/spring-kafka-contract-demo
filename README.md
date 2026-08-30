@@ -6,7 +6,7 @@ This repository is part of the **Kafka Contract Enforcement** initiative:
 
 A runnable Spring Boot demo for **fail-fast Kafka Schema Registry contract validation** with Apache Kafka, Avro, and Confluent Schema Registry.
 
-The demo shows how `spring-kafka-contract-starter` prevents an application from starting when a required schema subject is missing, the effective compatibility mode is unexpected, or a local schema is incompatible with the latest registered version.
+The demo uses `spring-kafka-contract-starter` 0.2.0 and proves both startup contract enforcement and a real producer → Kafka → consumer round trip.
 
 ## Architecture
 
@@ -50,15 +50,17 @@ The `schema-init` service waits for Schema Registry, configures `BACKWARD` compa
 mvn spring-boot:run
 ```
 
-With the initialized v1 contract the application should start successfully.
-
-### 3. Verify the application
+### 3. Verify the real Kafka flow
 
 ```bash
+curl -X POST http://localhost:8080/api/orders \
+  -H 'Content-Type: application/json' \
+  -d '{"orderId":"demo-1","amount":42.5,"createdAt":"2026-08-30T00:00:00Z"}'
+
 curl http://localhost:8080/api/orders/events
 ```
 
-A clean startup returns an empty JSON array until events are produced.
+The second call should eventually contain `demo-1`, proving the event was serialized, published to Kafka, consumed, deserialized, and exposed by the demo.
 
 ## Contract configuration
 
@@ -68,7 +70,6 @@ kafka:
     enabled: true
     compatibility: BACKWARD
     registry:
-      type: confluent
       url: http://localhost:8081
       connect-timeout-ms: 2000
       read-timeout-ms: 5000
@@ -80,29 +81,27 @@ kafka:
 
 ## Schema evolution scenarios
 
-The project includes Avro schemas for compatible and breaking evolution scenarios. You can replace the configured local schema with another version and restart the application to observe the fail-fast behavior.
+- `order-event-v1.avsc` — baseline runtime contract
+- `order-event-v2.avsc` — backward-compatible evolution that adds optional `customerNote` with a default
+- `order-event-v3.avsc` — intentionally breaking evolution
 
-- `order-event-v1.avsc` — baseline contract
-- `order-event-v2.avsc` — evolution example
-- `order-event-v3.avsc` — breaking evolution example
+Only v1 is compiled into the runtime generated Avro class. v2 and v3 are contract-evolution examples, which avoids ambiguous duplicate generated classes with the same Avro full name.
 
-The Postman collection under `postman/` and the GitHub Pages walkthrough provide additional demo steps.
+To test startup enforcement, point `schema-file` to v2 or v3 and restart the application. Under `BACKWARD`, v2 should remain compatible while v3 should fail startup.
 
-## Related project
+## CI coverage
 
-Starter repository:
+The GitHub Actions workflow:
 
-https://github.com/mathias82/spring-kafka-contract-starter
+1. installs the starter version under test
+2. starts Kafka and Schema Registry
+3. waits for schema initialization
+4. builds the demo
+5. starts Spring Boot
+6. POSTs a unique order
+7. polls the consumer endpoint until that exact order is observed
 
-## Background
-
-Medium article:
-
-https://medium.com/@mstauroy/fail-fast-kafka-schema-contracts-in-spring-boot-before-production-breaks-1b080204b49e
-
-Reddit discussion:
-
-https://www.reddit.com/r/apachekafka/comments/1q43hs6/failfast_kafka_schema_registry_compatibility/
+This means CI verifies the full demo path rather than only checking that the HTTP server starts.
 
 ## Purpose
 

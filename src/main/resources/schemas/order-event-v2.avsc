@@ -5,6 +5,7 @@
   "fields": [
     { "name": "orderId", "type": "string" },
     { "name": "amount", "type": "double" },
-    { "name": "createdAt", "type": "string", "default": "" }
+    { "name": "createdAt", "type": "string", "default": "" },
+    { "name": "customerNote", "type": ["null", "string"], "default": null }
   ]
 }
