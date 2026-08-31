@@ -6,7 +6,7 @@ This repository is part of the **Kafka Contract Enforcement** initiative:
 
 A runnable Spring Boot demo for **fail-fast Kafka Schema Registry contract validation** with Apache Kafka, Avro, and Confluent Schema Registry.
 
-The demo uses `spring-kafka-contract-starter` 0.2.2 and proves both startup contract enforcement and a real producer → Kafka → consumer round trip.
+The demo uses the published `spring-kafka-contract-starter` **0.2.3** from Maven Central and proves both startup contract enforcement and a real producer → Kafka → consumer round trip.
 
 ## Architecture
 
@@ -33,6 +33,7 @@ The consumer keeps received events in memory for demo purposes. PostgreSQL is no
 - Confluent Schema Registry
 - Avro
 - Docker Compose
+- `spring-kafka-contract-starter` 0.2.3
 
 ## Run the demo
 
@@ -116,17 +117,17 @@ Under `BACKWARD`, v2 should start and v3 should fail fast.
 
 ## CI coverage
 
-The GitHub Actions workflow:
+The GitHub Actions workflow validates the published `spring-kafka-contract-starter` **0.2.3** end to end:
 
-1. verifies that the released starter `0.2.2` resolves as a normal Maven dependency
+1. verifies that the Maven Central artifact resolves as a normal Maven dependency
 2. starts Kafka and Schema Registry
 3. waits for schema initialization
 4. builds the demo
-5. runs the v1 happy path and Kafka round trip
+5. runs the v1 happy path and real Kafka round trip
 6. verifies that compatible v2 is accepted
 7. verifies that breaking v3 is rejected during startup
 
-This means CI validates both the real Kafka runtime path and the fail-fast contract behavior users are expected to rely on.
+This means CI validates both the real Kafka runtime path and the fail-fast contract behavior users are expected to rely on, using the same published artifact consumers can add to their applications.
 
 ## Purpose
 
