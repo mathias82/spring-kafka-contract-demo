@@ -6,7 +6,7 @@ This repository is part of the **Kafka Contract Enforcement** initiative:
 
 A runnable Spring Boot demo for **fail-fast Kafka Schema Registry contract validation** with Apache Kafka, Avro, and Confluent Schema Registry.
 
-The demo uses the published `spring-kafka-contract-starter` **0.2.3** from Maven Central and proves both startup contract enforcement and a real producer → Kafka → consumer round trip.
+The demo uses the published `spring-kafka-contract-starter` **0.2.4** from Maven Central and proves startup contract enforcement, configurable registry-outage behavior, and a real producer → Kafka → consumer round trip.
 
 ## Architecture
 
@@ -33,7 +33,7 @@ The consumer keeps received events in memory for demo purposes. PostgreSQL is no
 - Confluent Schema Registry
 - Avro
 - Docker Compose
-- `spring-kafka-contract-starter` 0.2.3
+- `spring-kafka-contract-starter` 0.2.4
 
 ## Run the demo
 
@@ -57,11 +57,13 @@ mvn clean package
 bash scripts/verify-contract-scenarios.sh
 ```
 
-The verifier exercises all three expected behaviors:
+The verifier exercises five expected behaviors:
 
 1. `order-event-v1.avsc` starts successfully and completes a real producer → Kafka → consumer round trip.
 2. `order-event-v2.avsc` starts successfully because it is backward compatible with v1.
 3. `order-event-v3.avsc` must fail startup because it is intentionally incompatible.
+4. An unreachable registry allows startup when `unavailable-policy` is `WARN`.
+5. The same outage fails startup when `unavailable-policy` is `FAIL`.
 
 ## Run the baseline application manually
 
@@ -92,6 +94,7 @@ kafka:
       url: http://localhost:8081
       connect-timeout-ms: 2000
       read-timeout-ms: 5000
+      unavailable-policy: FAIL
     subjects:
       - name: order-events-value
         schema-file: classpath:schemas/order-event-v1.avsc
@@ -117,7 +120,7 @@ Under `BACKWARD`, v2 should start and v3 should fail fast.
 
 ## CI coverage
 
-The GitHub Actions workflow validates the published `spring-kafka-contract-starter` **0.2.3** end to end:
+The GitHub Actions workflow validates the published `spring-kafka-contract-starter` **0.2.4** end to end:
 
 1. verifies that the Maven Central artifact resolves as a normal Maven dependency
 2. starts Kafka and Schema Registry
@@ -126,6 +129,7 @@ The GitHub Actions workflow validates the published `spring-kafka-contract-start
 5. runs the v1 happy path and real Kafka round trip
 6. verifies that compatible v2 is accepted
 7. verifies that breaking v3 is rejected during startup
+8. verifies both `WARN` and `FAIL` behavior when Schema Registry is unreachable
 
 This means CI validates both the real Kafka runtime path and the fail-fast contract behavior users are expected to rely on, using the same published artifact consumers can add to their applications.
 

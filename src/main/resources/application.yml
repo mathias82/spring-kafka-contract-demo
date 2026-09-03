@@ -31,6 +31,7 @@ kafka:
       url: http://localhost:8081
       connect-timeout-ms: 2000
       read-timeout-ms: 5000
+      unavailable-policy: FAIL
     subjects:
       - name: order-events-value
         schema-file: classpath:schemas/order-event-v1.avsc
