@@ -19,8 +19,8 @@ jobs:
           java-version: 21
           cache: maven
 
-      - name: Verify released starter 0.2.2 resolves
-        run: mvn -B -U dependency:get -Dartifact=io.github.mathias82.spring.kafka:spring-kafka-contract-starter:0.2.2
+      - name: Verify released starter 0.2.4 resolves
+        run: mvn -B -U dependency:get -Dartifact=io.github.mathias82.spring.kafka:spring-kafka-contract-starter:0.2.4
 
       - name: Start Kafka and Schema Registry
         run: docker compose up -d
@@ -55,7 +55,7 @@ jobs:
       - name: Print logs on failure
         if: failure()
         run: |
-          for log in scenario-v1.log scenario-v2.log scenario-v3.log; do
+          for log in scenario-v1.log scenario-v2.log scenario-v3.log scenario-registry-warn.log scenario-registry-fail.log; do
             if [ -f "$log" ]; then
               echo "===== $log ====="
               cat "$log"

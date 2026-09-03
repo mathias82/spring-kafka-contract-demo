@@ -48,7 +48,7 @@
         <dependency>
             <groupId>io.github.mathias82.spring.kafka</groupId>
             <artifactId>spring-kafka-contract-starter</artifactId>
-            <version>0.2.3</version>
+            <version>0.2.4</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
