@@ -1,0 +1,3 @@
+# Keep helper scripts in the repository without letting them dominate GitHub's
+# language statistics for this Java/Spring Boot demo.
+scripts/*.sh linguist-vendored
