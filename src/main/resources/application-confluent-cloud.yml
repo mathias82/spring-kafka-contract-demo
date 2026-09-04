@@ -1,0 +1,21 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username='${KAFKA_API_KEY}' password='${KAFKA_API_SECRET}';
+      schema.registry.url: ${SCHEMA_REGISTRY_URL}
+      basic.auth.credentials.source: USER_INFO
+      schema.registry.basic.auth.user.info: ${SCHEMA_REGISTRY_API_KEY}:${SCHEMA_REGISTRY_API_SECRET}
+
+kafka:
+  contract:
+    registry:
+      url: ${SCHEMA_REGISTRY_URL}
+      username: ${SCHEMA_REGISTRY_API_KEY}
+      password: ${SCHEMA_REGISTRY_API_SECRET}
+    subjects:
+      - name: ${SCHEMA_SUBJECT:order-events-value}
+        schema-file: classpath:schemas/order-event-v1.avsc
+        schema-type: AVRO
