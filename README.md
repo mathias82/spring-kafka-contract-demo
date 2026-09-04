@@ -10,16 +10,15 @@ The demo uses the published `spring-kafka-contract-starter` **0.2.4** from Maven
 
 ## Architecture
 
-```text
-REST API
-   │
-   ▼
-Spring Boot producer ──► Kafka ──► Spring Boot consumer
-        │                              │
-        └──────── Schema Registry ─────┘
-                     ▲
-                     │
-            startup contract check
+```mermaid
+flowchart LR
+    A[REST API] --> B[Spring Boot producer]
+    B --> C[Kafka]
+    C --> D[Spring Boot consumer]
+    B -. schema serialization .-> E[Schema Registry]
+    D -. schema deserialization .-> E
+    F[Startup contract guardrail] --> E
+    F -. blocks readiness on contract failure .-> B
 ```
 
 The consumer keeps received events in memory for demo purposes. PostgreSQL is not required.
@@ -35,7 +34,29 @@ The consumer keeps received events in memory for demo purposes. PostgreSQL is no
 - Docker Compose
 - `spring-kafka-contract-starter` 0.2.4
 
-## Run the demo
+## Five-minute walkthrough
+
+Run the complete local demonstration with one command:
+
+```bash
+bash scripts/run-demo.sh
+```
+
+The script starts Kafka and Schema Registry, builds the application, and runs the full contract scenario suite. By default it tears the Docker stack down afterwards. To keep the stack running for manual exploration:
+
+```bash
+KEEP_STACK=true bash scripts/run-demo.sh
+```
+
+The expected story is intentionally simple:
+
+1. **baseline schema** → application starts and a real producer → Kafka → consumer round trip succeeds
+2. **backward-compatible evolution** → application starts
+3. **breaking evolution** → application refuses to start
+4. **temporary registry outage + WARN** → startup continues with an observable warning
+5. **temporary registry outage + FAIL** → startup is rejected
+
+## Run the demo step by step
 
 ### 1. Start Kafka and Schema Registry
 
@@ -101,6 +122,32 @@ kafka:
         schema-type: AVRO
 ```
 
+## Confluent Cloud profile
+
+The repository includes an optional `confluent-cloud` Spring profile so the same application can be pointed at Confluent Cloud without committing credentials.
+
+Set the required environment variables:
+
+```bash
+export KAFKA_BOOTSTRAP_SERVERS='...'
+export KAFKA_API_KEY='...'
+export KAFKA_API_SECRET='...'
+export SCHEMA_REGISTRY_URL='...'
+export SCHEMA_REGISTRY_API_KEY='...'
+export SCHEMA_REGISTRY_API_SECRET='...'
+```
+
+Then run:
+
+```bash
+mvn spring-boot:run \
+  -Dspring-boot.run.profiles=confluent-cloud
+```
+
+The profile configures Kafka with `SASL_SSL`/`PLAIN`, configures the Confluent serializer/deserializer with Schema Registry credentials, and passes the same Schema Registry credentials to the startup contract guardrail. You can override the expected subject with `SCHEMA_SUBJECT`.
+
+> The local Docker-based scenario suite remains the reproducible CI proof. The Confluent Cloud profile is an opt-in deployment example and deliberately requires user-provided credentials.
+
 ## Schema evolution scenarios
 
 - `order-event-v1.avsc` — baseline runtime contract
@@ -132,6 +179,12 @@ The GitHub Actions workflow validates the published `spring-kafka-contract-start
 8. verifies both `WARN` and `FAIL` behavior when Schema Registry is unreachable
 
 This means CI validates both the real Kafka runtime path and the fail-fast contract behavior users are expected to rely on, using the same published artifact consumers can add to their applications.
+
+## Why this demo exists
+
+Schema compatibility can be checked in developer and CI workflows, but deployment environments can still drift from those assumptions. This demo focuses on that operational boundary: **what happens when the application starts against the registry it is actually configured to use?**
+
+The starter is therefore complementary to build-time Schema Registry tooling rather than a replacement for it.
 
 ## Purpose
 
