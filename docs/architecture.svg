@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title desc">
+  <title id="title">Spring Kafka contract demo architecture</title>
+  <desc id="desc">REST API calls a Spring Boot producer, messages flow through Kafka to a Spring Boot consumer, both use Schema Registry, and a startup contract guardrail validates the registry before the app becomes ready.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#57606a"/>
+    </marker>
+    <style>
+      .box { fill:#ffffff; stroke:#d0d7de; stroke-width:2; rx:14; }
+      .accent { fill:#f6f8fa; stroke:#0969da; stroke-width:2.5; rx:14; }
+      .title { font:600 22px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; fill:#24292f; }
+      .label { font:600 18px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; fill:#24292f; }
+      .small { font:400 14px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; fill:#57606a; }
+      .arrow { stroke:#57606a; stroke-width:2.5; fill:none; marker-end:url(#arrow); }
+      .dash { stroke:#8c959f; stroke-width:2.2; stroke-dasharray:7 7; fill:none; marker-end:url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="500" fill="#ffffff"/>
+  <text x="50" y="55" class="title">Runnable Kafka contract validation demo</text>
+
+  <rect x="50" y="130" width="160" height="90" class="box"/>
+  <text x="130" y="168" text-anchor="middle" class="label">REST API</text>
+  <text x="130" y="194" text-anchor="middle" class="small">Create order</text>
+
+  <rect x="270" y="120" width="230" height="110" class="box"/>
+  <text x="385" y="163" text-anchor="middle" class="label">Spring Boot producer</text>
+  <text x="385" y="191" text-anchor="middle" class="small">Serialize + publish</text>
+
+  <rect x="570" y="130" width="160" height="90" class="box"/>
+  <text x="650" y="168" text-anchor="middle" class="label">Kafka</text>
+  <text x="650" y="194" text-anchor="middle" class="small">Order events</text>
+
+  <rect x="800" y="120" width="250" height="110" class="box"/>
+  <text x="925" y="163" text-anchor="middle" class="label">Spring Boot consumer</text>
+  <text x="925" y="191" text-anchor="middle" class="small">Deserialize + expose</text>
+
+  <rect x="430" y="340" width="340" height="90" class="box"/>
+  <text x="600" y="377" text-anchor="middle" class="label">Confluent Schema Registry</text>
+  <text x="600" y="403" text-anchor="middle" class="small">Schemas + compatibility policy</text>
+
+  <rect x="820" y="320" width="300" height="130" class="accent"/>
+  <text x="970" y="360" text-anchor="middle" class="label">Startup contract guardrail</text>
+  <text x="970" y="389" text-anchor="middle" class="small">Validates the configured contract</text>
+  <text x="970" y="414" text-anchor="middle" class="small">before application readiness</text>
+
+  <path d="M210 175 H270" class="arrow"/>
+  <path d="M500 175 H570" class="arrow"/>
+  <path d="M730 175 H800" class="arrow"/>
+  <path d="M385 230 C385 290 480 300 540 340" class="dash"/>
+  <path d="M925 230 C925 285 760 300 665 340" class="dash"/>
+  <path d="M820 385 H770" class="arrow"/>
+  <path d="M970 320 V260 C970 245 945 240 925 230" class="dash"/>
+</svg>
