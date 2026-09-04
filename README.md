@@ -10,16 +10,9 @@ The demo uses the published `spring-kafka-contract-starter` **0.2.4** from Maven
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    A[REST API] --> B[Spring Boot producer]
-    B --> C[Kafka]
-    C --> D[Spring Boot consumer]
-    B -. schema serialization .-> E[Schema Registry]
-    D -. schema deserialization .-> E
-    F[Startup contract guardrail] --> E
-    F -. blocks readiness on contract failure .-> B
-```
+<p align="center">
+  <img src="docs/architecture.svg" alt="Spring Kafka contract demo architecture" width="100%">
+</p>
 
 The consumer keeps received events in memory for demo purposes. PostgreSQL is not required.
 
